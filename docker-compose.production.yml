@@ -12,7 +12,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
   backend:
-    build: ./backend/
+    image: jidiot/kittygram_backend
     env_file: .env
     depends_on:
       - db
@@ -21,13 +21,13 @@ services:
       - media:/media
   frontend:
     env_file: .env
-    build: ./frontend/
+    image: jidiot/kittygram_frontend
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
       - media:/media
   gateway:
-    build: ./nginx/
+    image: jidiot/kittygram_gateway
     env_file: .env
     ports:
       - 9000:80
