@@ -1,26 +1,77 @@
-#  Как работать с репозиторием финального задания
-
-## Что нужно сделать
-
-Настроить запуск проекта Kittygram в контейнерах и CI/CD с помощью GitHub Actions
-
-## Как проверить работу с помощью автотестов
-
-В корне репозитория создайте файл tests.yml со следующим содержимым:
-```yaml
-repo_owner: ваш_логин_на_гитхабе
-kittygram_domain: полная ссылка (https://доменное_имя) на ваш проект Kittygram
-taski_domain: полная ссылка (https://доменное_имя) на ваш проект Taski
-dockerhub_username: ваш_логин_на_докерхабе
+#  Kittygram
+Проект Kittygram позволяет пользователям поделиться своими домашними любимцами и рассказать о их достижениях.
+### 1. Создание и развертка контейнеров проекта:
+Форкнуть репозиторий, сконировать и перейти в корневую папку `kittygram_final`
+Создать файл .env и заполнить его переменными:
 ```
+POSTGRES_DB=...
+POSTGRES_USER=...
+POSTGRES_PASSWORD=...
+POSTGRES_HOST=...
+POSTGRES_PORT=...
 
-Скопируйте содержимое файла `.github/workflows/main.yml` в файл `kittygram_workflow.yml` в корневой директории проекта.
+SECRET_KEY=...
+DEBUG=False
+ALLOWED_HOSTS=...
+```
+Убедиться, что сервис Docker активен в системе:
+```
+sudo systemctl status docker
+```
+Собрать контейнеры:
+```
+sudo docker compose -f docker-compose.production.yml pull
+sudo docker compose -f docker-compose.production.yml down
+sudo docker compose -f docker-compose.production.yml up -d
+```
+Выполнить миграции, собрать статику:
+```
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
+sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic
+sudo docker compose -f docker-compose.production.yml exec backend cp -r /app/collected_static/. /static/
+```
+Установить nginx:
+```
+sudo apt install nginx -y
+sudo systemctl start nginx
+```
+Настроить фаерволл:
+```
+sudo ufw allow 'Nginx Full'
+sudo ufw allow OpenSSH
+sudo ufw enable
+```
+Настроить nginx:
+```
+sudo nano /etc/nginx/sites-enabled/default
+```
+Заменяем содержимое файла на:
+```
+server {
+    listen 80;
+    server_name example.com;
+    
+    location / {
+        proxy_set_header HOST $host;
+        proxy_pass http://127.0.0.1:9000;
 
-Для локального запуска тестов создайте виртуальное окружение, установите в него зависимости из backend/requirements.txt и запустите в корневой директории проекта `pytest`.
+    }
+}
+```
+Проверяем и перезагружаем nginx:
+```
+sudo nginx -t
+sudo systemctl reload nginx
+```
+### 2. Стек технологий
+* #### Django REST
+* #### Python 3.9
+* #### Gunicorn
+* #### Nginx
+* #### JS
+* #### Node.js
+* #### PostgreSQL
+* #### Docker
 
-## Чек-лист для проверки перед отправкой задания
-
-- Проект Taski доступен по доменному имени, указанному в `tests.yml`.
-- Проект Kittygram доступен по доменному имени, указанному в `tests.yml`.
-- Пуш в ветку main запускает тестирование и деплой Kittygram, а после успешного деплоя вам приходит сообщение в телеграм.
-- В корне проекта есть файл `kittygram_workflow.yml`.
+### 3. Автор проекта
+#### [Дмитрий К.](https://github.com/777777k)
